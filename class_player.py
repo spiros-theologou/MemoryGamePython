@@ -1,6 +1,6 @@
 
 class Player:
-    """Κλάση 'Παίχτης', καθορίζει τα γνωρίσματα ενός παίχτη δεδομένου του αριθμού του.(player 1, player 2 ...)"""
+    """Κλάση 'Παίκτης', καθορίζει τα γνωρίσματα ενός παίχτη δεδομένου του αριθμού του.(player 1, player 2 ...)"""
     def __init__(self, player_number):
         self.player_number = player_number
         self.name = f"Player {self.player_number}"
