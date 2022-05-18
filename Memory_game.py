@@ -91,30 +91,32 @@ class NewGame:
         """Η συνάρτηση που καλείται με το κλικάρισμα ενός tile"""
 
         self.click_count += 1  # μετρητής των click για αυτόν το γύρο
+        print(self.click_count) # βοηθητικο
         self.flip(tile)
         self.master.update()  # ανανέωση του master για εμφάνιση των ανοιχτών tiles.
         self.clicked_tiles.append(tile)
-
+        self.check_king_queen()  # έλεγχος για το αν έχουμε ζέυγος king-queen
         # συγκρίνουμε τα tiles αν είναι 2 κλικαρισμένα
         if self.click_count == 2:
             self.compare_tiles(self.clicked_tiles)
-            self.change_player()
-            self.clicked_tiles.clear()
+            self.change_player()  # αλλαγή τρέχοντος παίκτη
+            self.clicked_tiles.clear()  # καθαρισμός της λίστας των κλικαρισμένων tiles
             self.click_count = 0
             self.message.configure(text=f"{self.current_player} plays..", fg="black")
 
     def compare_tiles(self, tile_list):
         """Συγκρίνει τα tiles της λίστας, ανανεώνει κατάλληλα το μήνυμα και το scoreboard"""
-        if len(tile_list) == 2: # στην περίπτωση που δεν έχει ανοίξει ο συνδυασμός ρήγας-ντάμα
+
+        if len(tile_list) == 2:  # στην περίπτωση που δεν έχει ανοίξει ο συνδυασμός ρήγας-ντάμα
             if tile_list[0].rank != tile_list[1].rank:  # αν δεν ταιριάζουν, τα γυρνάμε ανάποδα
                 self.message.configure(text="NO MATCH!", fg="red")
                 self.message.update()
                 sleep(0.7)
                 for t in tile_list:
                     self.flip(t)
-                    # refresh των tiles που κλικάραμε
-                    for tile in self.clicked_tiles:
-                        tile.configure(command=lambda t=tile: self.button_click(t))
+                # refresh των tiles που κλικάραμε
+                for tile in self.clicked_tiles:
+                    tile.configure(command=lambda t=tile: self.button_click(t))
             else:
                 self.message.configure(text="MATCH!", fg="blue")
                 self.message.update()
@@ -122,6 +124,56 @@ class NewGame:
                 self.current_player.add_score(tile_list[0].value())
                 self.update_scoreboard()
                 self.open_tiles += 2
+
+        else:  # στην περίπτωση που έχουμε ρήγα-ντάμα- 3ο φύλλο
+            kings_count = 0  # μετρητής για του kings
+            queens_count = 0  # μετρητής για τις queens
+
+            # απαρίθμηση των kings και queens
+            for tile in tile_list:
+                if tile.rank == "king":
+                    kings_count += 1
+                elif tile.rank == "queen":
+                    queens_count += 1
+
+            # διαχωρισμός περιπτώσεων
+            if kings_count == 2:
+                self.message.configure(text="MATCH!", fg="blue")
+                self.message.update()
+                sleep(0.7)
+                self.current_player.add_score(10)
+                self.update_scoreboard()
+                for tile in tile_list:
+                    if tile.rank == "queen":
+                        self.flip(tile)
+                self.refresh_tiles()
+            elif queens_count == 2:
+                self.message.configure(text="MATCH!", fg="blue")
+                self.message.update()
+                sleep(0.7)
+                self.current_player.add_score(10)
+                self.update_scoreboard()
+                for tile in tile_list:
+                    if tile.rank == "king":
+                        self.flip(tile)
+                self.refresh_tiles()
+            else:
+                self.message.configure(text="NO MATCH!", fg="red")
+                self.message.update()
+                sleep(0.7)
+                for tile in tile_list:
+                    self.flip(tile)
+                # refresh των tiles που κλικάραμε
+                self.refresh_tiles()
+
+
+
+    def refresh_tiles(self):
+        """Κάνει refresh τα tiles που έχουμε ανοίξει και επαναπροσθέτει λειτουργικότητα"""
+        for tile in self.clicked_tiles:
+            tile.configure(command=lambda t=tile: self.button_click(t))
+
+
 
     def flip(self, tile):
         """Συνάρτηση που 'γυρίζει' ένα tile"""
@@ -225,3 +277,13 @@ class NewGame:
             self.current_player_index += 1
             self.current_player_index = self.current_player_index % len(self.players)
             self.current_player = self.players[self.current_player_index]
+
+    def check_king_queen(self):
+        """Ελέγχει αν τα 2 πρώτα φύλλα που ανοίχτηκαν είναι king and queen και εκτελεί τις ανάλογες διαδικασίες"""
+        try:
+            if {self.clicked_tiles[0].rank, self.clicked_tiles[1].rank} == {"king", "queen"} and len(self.clicked_tiles) <= 2:
+                self.message.configure(text="King and Queen, click on a 3rd tile!")
+                self.message.update()
+                self.click_count -= 1  # μειώνουμε το click count, ωστε να μην αλλάξει ο γύρος
+        except IndexError:
+            pass
