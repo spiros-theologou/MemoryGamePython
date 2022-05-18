@@ -35,25 +35,29 @@ class NewGame:
         self.score_frame.rowconfigure(index=0, weight=1)
         self.score_frame.place(relx=0.08, rely=-0.005, anchor="ne")
 
-
-
-        # Δημιουργία και τοποθέτηση του scoreboard
-        self.create_scoreboard()
-
-
-
+        # Δημιουργία του frame που θα τοποθετηθεί η λεζάντα των μηνυμάτων παιχνιδιού(ποιος παίζει, αν έχουμε match η όχι κλπ...)
+        self.message_frame = Frame(master, bg="green")
+        self.message_frame.columnconfigure(index=0, weight=1)
+        self.message_frame.rowconfigure(index=0, weight=1)
+        self.message_frame.place(relx=0.5, rely=0.5, anchor="n")
 
         # Αρχικοποίηση του αριθμού του γύρου, των "γυρισμένων" tiles ανά γύρο(click_count - θα βοηθήσει στο να προσδιορίσουμε πότε τελειώνει ο γύρος για έναν παίκτη)
         # της λίστας με τα επιλεγμένα tiles ανά γύρο
         # και του index του παίκτη που παίζει
-        self.current_player = self.players[0].name
-        self.round = 1
-        self.click_count = 0
+        self.current_player_index = 0  # το index του τρεχοντος παίκτη
+        self.current_player = self.players[0]  # ο τρέχων παίκτης
+        self.click_count = 0  # μεταβλητή που αποθηκεύει των αριθμό των κλικαρισμένων tiles ανά γύρο
         self.clicked_tiles = []  # λίστα στην οποία θα αποθηκεύονται προσωρινά τα ανοιγμένα tiles
 
         # Αρχικοποίηση του αριθμού των "ανοιχτών" και των "κλειστών" tiles
         self.open_tiles = 0
         self.closed_tiles = len(self.tiles)
+
+        # Δημιουργία και τοποθέτηση του scoreboard
+        self.create_scoreboard()
+
+        # Δημιουργία και τοποθέτηση του message_board
+        self.create_message_board()
 
     def init_tiles(self):
         """Αρχικοποιεί μια λίστα από tiles, ανάλογα με τη δυσκολία που επιλέχθηκε"""
@@ -83,55 +87,52 @@ class NewGame:
 
         shuffle(self.tiles)  # "ανακάτεμα" των tiles
 
-
     def button_click(self, tile):
         """Η συνάρτηση που καλείται με το κλικάρισμα ενός tile"""
 
         self.click_count += 1  # μετρητής των click για αυτόν το γύρο
-        print(self.click_count)
         self.flip(tile)
         self.master.update()  # ανανέωση του master για εμφάνιση των ανοιχτών tiles.
         self.clicked_tiles.append(tile)
-        print(self.clicked_tiles)
 
         # συγκρίνουμε τα tiles αν είναι 2 κλικαρισμένα
         if self.click_count == 2:
             self.compare_tiles(self.clicked_tiles)
-
-
-
+            self.change_player()
             self.clicked_tiles.clear()
             self.click_count = 0
-
-
-
-
+            self.message.configure(text=f"{self.current_player} plays..", fg="black")
 
     def compare_tiles(self, tile_list):
-        """Συγκρίνει τα tiles της λίστας και πράττει αναλόγως.."""
-        if tile_list[0].rank != tile_list[1].rank:  # αν δεν ταιριάζουν, τα γυρνάμε ανάποδα
-            print("NO MATCH")
-            sleep(0.7)
-            for t in tile_list:
-                self.flip(t)
-                # refresh των tiles που κλικάραμε
-                for tile in self.clicked_tiles:
-                    tile.configure(command=lambda t=tile: self.button_click(t))
-        else:
-            print("MATCH!")
+        """Συγκρίνει τα tiles της λίστας, ανανεώνει κατάλληλα το μήνυμα και το scoreboard"""
+        if len(tile_list) == 2: # στην περίπτωση που δεν έχει ανοίξει ο συνδυασμός ρήγας-ντάμα
+            if tile_list[0].rank != tile_list[1].rank:  # αν δεν ταιριάζουν, τα γυρνάμε ανάποδα
+                self.message.configure(text="NO MATCH!", fg="red")
+                self.message.update()
+                sleep(0.7)
+                for t in tile_list:
+                    self.flip(t)
+                    # refresh των tiles που κλικάραμε
+                    for tile in self.clicked_tiles:
+                        tile.configure(command=lambda t=tile: self.button_click(t))
+            else:
+                self.message.configure(text="MATCH!", fg="blue")
+                self.message.update()
+                sleep(0.7)
+                self.current_player.add_score(tile_list[0].value())
+                self.update_scoreboard()
+                self.open_tiles += 2
 
     def flip(self, tile):
         """Συνάρτηση που 'γυρίζει' ένα tile"""
         if not tile.is_flipped:
             # αν το tile είναι face down, το γυρίζει και αφαιρεί τη λειτουργικότητα
-            print(f"Flipping tile{repr(tile)}, {self.tiles.index(tile)}")
             tile.image = tile.front_image
             tile.flip()
             tile.configure(image=tile.image)
             tile.configure(command=0)
         else:
             if tile.is_flipped:
-                print(f"Unflipping tile{repr(tile)}, {self.tiles.index(tile)}")
                 tile.image = tile.back_image
                 tile.flip()
                 tile.configure(image=tile.image)
@@ -152,10 +153,9 @@ class NewGame:
             # Τοποθέτηση των tiles
             j = 0
             for k, tile in enumerate(self.tiles):
-                print(repr(tile))  # να αφαιρεθεί, είναι βοηθητικό
                 tile.image = tile.back_image
                 tile.configure(image=tile.image)
-                tile.grid(row=j, column=(k + 1) % columns, padx=15, pady=10)
+                tile.grid(row=j, column=k % columns, padx=15, pady=10)
                 if (k + 1) % columns == 0:
                     j += 1
 
@@ -166,10 +166,9 @@ class NewGame:
             # Τοποθέτηση των tiles
             j = 0
             for k, tile in enumerate(self.tiles):
-                print(repr(tile))  # είναι βοηθητικό print
                 tile.image = tile.back_image
                 tile.configure(image=tile.image)
-                tile.grid(row=j, column=(k + 1) % columns, padx=10, pady=10)
+                tile.grid(row=j, column=k % columns, padx=10, pady=10)
                 if (k + 1) % columns == 0:
                     j += 1
 
@@ -180,10 +179,9 @@ class NewGame:
             # Τοποθέτηση των tiles
             j = 0
             for k, tile in enumerate(self.tiles):
-                print(repr(tile))  # να αφαιρεθεί, είναι βοηθητικό
                 tile.image = tile.back_image
                 tile.configure(image=tile.image)
-                tile.grid(row=j, column=(k + 1) % columns, padx=6, pady=6)
+                tile.grid(row=j, column=k % columns, padx=6, pady=6)
                 if (k + 1) % columns == 0:
                     j += 1
 
@@ -195,12 +193,35 @@ class NewGame:
                 self.players.append(Player(player_number))
 
     def create_scoreboard(self):
-        """ Δημιουργεί και τοποθετεί τα labels του σκορ του κάθε παίκτη """
-        label = Label(self.score_frame, text="Scores", font="Courier 26 bold italic", bg="green").grid(row=0, column=0)
+        """ Δημιουργεί και τοποθετεί τα labels του σκορ του κάθε παίκτη,
+         επίσης δημιουργεί ένα dictionary με το label για το score του κάθε παίκτη(key=player, value=label)"""
+        self.player_scores = dict()
+        self.scoreboard = Label(self.score_frame, text="Scores", font="Courier 26 bold italic", bg="green")
+        self.scoreboard.grid(row=0, column=0)
         for i, player in enumerate(self.players):
             label = Label(self.score_frame, text=f"{player.name}: {player.score}", font="Courier 16 bold", bg="green")
+            self.player_scores[player] = label
             label.grid(row=i + 1, column=0)
 
     def create_message_board(self):
         """ Τοποθετεί μηνύματα στο πάνω μέρος της οθόνης """
-        label = Label(self.master, text="ABCDE", font="Courier 36 bold italic", bg="green").place(width=0.5, height=0.1)
+        self.message = Label(self.master, text=f"{self.current_player} plays..", font="Courier 36 bold italic", bg="green")
+        self.message.pack(pady=50)
+
+    def update_scoreboard(self):
+        """Ανενεώνει το scoreboard"""
+        for player, label in self.player_scores.items():
+            label.configure(text=f"{player.name}: {player.score}")
+
+    def change_player(self):
+        """Προχωράει στον επόμενο παίκτη"""
+        if self.clicked_tiles[0].rank == self.clicked_tiles[1].rank == "jack":  # αν έχουμε ανοίξει βαλέδες ξαναπαίζει ο ίδιος πάικτης
+            return None
+        elif self.clicked_tiles[0].rank == self.clicked_tiles[1].rank == "king":  # αν έχουμε ανοίξει 2 ρηγάδες ο επόμενος παίκτης χάνει τη σειρά του
+            self.current_player_index += 2
+            self.current_player_index = self.current_player_index % len(self.players)
+            self.current_player = self.players[self.current_player_index]
+        else:
+            self.current_player_index += 1
+            self.current_player_index = self.current_player_index % len(self.players)
+            self.current_player = self.players[self.current_player_index]
