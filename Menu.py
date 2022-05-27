@@ -1,4 +1,4 @@
-from Memory_game import *
+from class_ContinueGame import *
 
 
 class Menu:
@@ -8,15 +8,14 @@ class Menu:
         self.master = master
         self.frame = Frame(master, bg="green").place(relx=.5, rely=.5)
 
-
         # Label με μήνυμα τον τίτλο του παιχνιδιού
         self.welcome_message = Label(self.master, text="Παιχνίδι Mνήμης με Tράπουλα!",
-                                bg="green", fg="red",
-                                font="Verdana 36 bold italic", bd=1)
+                                     bg="green", fg="red",
+                                     font="Verdana 36 bold italic", bd=1)
         self.welcome_message.place(relx=.5, rely=.05, anchor="n")
         # Δημιουργία Buttons
         self.b_new_game = Button(self.frame, text="Νέο Παιχνίδι", font="Verdana 26 bold", bg="grey", height=2, width=11, command=self.new_game)
-        self.b_continue = Button(self.frame, text="Συνέχεια...", font="Verdana 26 bold", bg="grey", height=2, width=11)
+        self.b_continue = Button(self.frame, text="Συνέχεια...", font="Verdana 26 bold", bg="grey", height=2, width=11, command=self.start_game)
 
         # Τοποθέτηση των buttons
         self.b_new_game.place(relx=.5, rely=.3, anchor='center')
@@ -63,7 +62,6 @@ class Menu:
         b_easy.place(relx=.5, rely=.3, anchor='center')
         b_medium.place(relx=.5, rely=.38, anchor='center')
         b_hard.place(relx=.5, rely=.46, anchor='center')
-        # b_back.place(relx=.1, rely=.1, anchor='nw')
 
     def num_of_players(self):
         """Επιλογή αριθμού παχτών"""
@@ -90,7 +88,7 @@ class Menu:
         b3.place(relx=.6, rely=.38, anchor='center')
         b4.place(relx=.7, rely=.38, anchor='center')
 
-    def clear_screen(self, *widgets):
+    def clear_screen(*widgets):
         """Αφαιρεί τα widgets από το παράθυρο"""
         for widget in widgets:
             widget.destroy()
@@ -108,3 +106,7 @@ class Menu:
          Καλεί την έναρξη παιχνιδιού"""
         if self.mode == "New Game":
             NewGame(self.master, self.difficulty, self.players)
+        else:
+            self.mode = "Continue Game"
+            self.clear_screen(self.b_new_game, self.b_continue, self.welcome_message)
+            ContinueGame("saved_game_data.pickle", self.master)

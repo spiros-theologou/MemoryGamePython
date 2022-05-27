@@ -1,7 +1,9 @@
 from class_tile import *
-from random import shuffle
-from class_player import Player
-from time import sleep
+from random import shuffle  # χρειάζεται για το ανακάτεμα των φύλλων
+from class_player import Player  # η κλάση που ορίζει τον παίκτη με τα βασικά του γνωρίσματα
+from time import sleep  # για να μην ανανεώνεται κατευθείαν η σελίδα πριν προλάβει ο παίκτης να δει τα φύλλα που ανοίξανε
+from class_GameState import *  # για την δημιουργία του GameState object που θα χρησιμοποιηθεί για την αποθύκευση
+import pickle  # για την αποθήκευση
 
 
 class NewGame:
@@ -41,7 +43,7 @@ class NewGame:
         self.message_frame.rowconfigure(index=0, weight=1)
         self.message_frame.place(relx=0.5, rely=0.5, anchor="n")
 
-        # Αρχικοποίηση του αριθμού του γύρου, των "γυρισμένων" tiles ανά γύρο(click_count - θα βοηθήσει στο να προσδιορίσουμε πότε τελειώνει ο γύρος για έναν παίκτη)
+        # Αρχικοποίηση του αριθμού των "γυρισμένων" tiles ανά γύρο(click_count - θα βοηθήσει στο να προσδιορίσουμε πότε τελειώνει ο γύρος για έναν παίκτη)
         # της λίστας με τα επιλεγμένα tiles ανά γύρο
         # και του index του παίκτη που παίζει
         self.current_player_index = 0  # το index του τρεχοντος παίκτη
@@ -51,13 +53,16 @@ class NewGame:
 
         # Αρχικοποίηση του αριθμού των "ανοιχτών" και των "κλειστών" tiles
         self.open_tiles = 0
-        self.closed_tiles = len(self.tiles)
+        self.total_tiles = len(self.tiles)
 
         # Δημιουργία και τοποθέτηση του scoreboard
         self.create_scoreboard()
 
         # Δημιουργία και τοποθέτηση του message_board
         self.create_message_board()
+
+        # Δημιουργία αντικειμένου GameState για την αποθήκευση του παιχνιδιού
+        self.current_state = GameState(self.current_player, self.current_player_index, self.tiles, self.players, self.open_tiles, self.total_tiles, self.difficulty)
 
     def init_tiles(self):
         """Αρχικοποιεί μια λίστα από tiles, ανάλογα με τη δυσκολία που επιλέχθηκε"""
@@ -91,7 +96,6 @@ class NewGame:
         """Η συνάρτηση που καλείται με το κλικάρισμα ενός tile"""
 
         self.click_count += 1  # μετρητής των click για αυτόν το γύρο
-        print(self.click_count) # βοηθητικο
         self.flip(tile)
         self.master.update()  # ανανέωση του master για εμφάνιση των ανοιχτών tiles.
         self.clicked_tiles.append(tile)
@@ -103,6 +107,8 @@ class NewGame:
             self.clicked_tiles.clear()  # καθαρισμός της λίστας των κλικαρισμένων tiles
             self.click_count = 0
             self.message.configure(text=f"{self.current_player} plays..", fg="black")
+            self.save_game()  # αποθηκεύει την κατάσταση του παιχνιδιού
+            self.check_game_end()  # έλεγχος για τη λήξη του παιχνιδιού
 
     def compare_tiles(self, tile_list):
         """Συγκρίνει τα tiles της λίστας, ανανεώνει κατάλληλα το μήνυμα και το scoreboard"""
@@ -114,9 +120,6 @@ class NewGame:
                 sleep(0.7)
                 for t in tile_list:
                     self.flip(t)
-                # refresh των tiles που κλικάραμε
-                for tile in self.clicked_tiles:
-                    tile.configure(command=lambda t=tile: self.button_click(t))
             else:
                 self.message.configure(text="MATCH!", fg="blue")
                 self.message.update()
@@ -135,7 +138,6 @@ class NewGame:
                     kings_count += 1
                 elif tile.rank == "queen":
                     queens_count += 1
-
             # διαχωρισμός περιπτώσεων
             if kings_count == 2:
                 self.message.configure(text="MATCH!", fg="blue")
@@ -143,37 +145,28 @@ class NewGame:
                 sleep(0.7)
                 self.current_player.add_score(10)
                 self.update_scoreboard()
+                self.open_tiles += 2
                 for tile in tile_list:
                     if tile.rank == "queen":
                         self.flip(tile)
-                self.refresh_tiles()
+
             elif queens_count == 2:
                 self.message.configure(text="MATCH!", fg="blue")
                 self.message.update()
                 sleep(0.7)
                 self.current_player.add_score(10)
                 self.update_scoreboard()
+                self.open_tiles += 2
                 for tile in tile_list:
                     if tile.rank == "king":
                         self.flip(tile)
-                self.refresh_tiles()
+
             else:
                 self.message.configure(text="NO MATCH!", fg="red")
                 self.message.update()
                 sleep(0.7)
                 for tile in tile_list:
                     self.flip(tile)
-                # refresh των tiles που κλικάραμε
-                self.refresh_tiles()
-
-
-
-    def refresh_tiles(self):
-        """Κάνει refresh τα tiles που έχουμε ανοίξει και επαναπροσθέτει λειτουργικότητα"""
-        for tile in self.clicked_tiles:
-            tile.configure(command=lambda t=tile: self.button_click(t))
-
-
 
     def flip(self, tile):
         """Συνάρτηση που 'γυρίζει' ένα tile"""
@@ -188,7 +181,7 @@ class NewGame:
                 tile.image = tile.back_image
                 tile.flip()
                 tile.configure(image=tile.image)
-                tile.configure(command=lambda t=tile: self.flip(t))
+                tile.configure(command=lambda t=tile: self.button_click(t))
 
     def add_tile_functionality(self):
         """ Προσθήκη λειτουργικότητας στα tiles , αλλάζοντας την εικόνα που φαίνεται στο tile που κλικάρεται"""
@@ -287,3 +280,41 @@ class NewGame:
                 self.click_count -= 1  # μειώνουμε το click count, ωστε να μην αλλάξει ο γύρος
         except IndexError:
             pass
+
+    def save_game(self):
+        """Καλείται στο τέλος κάθε γύρου. Ενημερώνει το GameState και το αποθηκεύει, κάνοντας overwrite το προηγούμενο"""
+        self.current_state.current_player = self.current_player
+        self.current_state.tiles_info = [(tile.rank, tile.suit, tile.is_flipped) for tile in self.tiles]  # αποθηκεύει την κατάσταση του κάθε tile σε μια λίστα, ώστε να μπορούμε να το κάνουμε recreate
+        self.current_state.open_tiles = self.open_tiles
+        self.current_state.players_list = self.players
+        self.current_state.player_index = self.current_player_index
+
+        with open("saved_game_data.pickle", "wb") as outfile:
+            pickle.dump(self.current_state, outfile)
+
+    def check_game_end(self):
+        """Ελέγχει αν το παιχνίδι έχει τελειώσει συγκρίνοντας τον αριθμό των ανοιγμένων tiles
+        με τον αριθμό των συνολικών, στη συνέχεια ανακοινώνει τον νικητή βρίσκοντας το μέγιστο score"""
+
+        if self.open_tiles == self.total_tiles:
+            max_score = max([player.score for player in self.players])  # βρίσκουμε το μέγιστο σκορ
+            winners = []  # λίστα με τους νικητές
+            for player in self.players:
+                if player.score == max_score:
+                    winners.append(player)
+
+            self.message.configure(text="GAME OVER!", fg="yellow")
+            self.message.update()
+            sleep(0.7)
+            if len(winners) == 1:
+                self.message.configure(text=f"The winner is: {winners[0]} with {winners[0].score} points!\n\n\nThanks for playing!")
+                self.board_frame.destroy()
+                self.message.update()
+            else:
+                winners_names = ""
+                for winner in winners:
+                    winners_names += f"{winner.name}, "
+
+                self.board_frame.destroy()
+                self.message.configure(text=f"The game is tied between {winners_names}\nwith a score of {max_score} points!\n\n\nThanks for playing!")
+                self.message.update()

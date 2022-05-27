@@ -7,7 +7,7 @@ suits = ["spades", "hearts", "clubs", "diamonds"]
 class Tile(Button):
     """Κλάση tile που κληρονομεί ιδιότητες από το Button της Tk βιβλιοθήκης"""
 
-    def __init__(self, rank, suit, **kw):
+    def __init__(self, rank, suit, is_flipped=False, **kw):
         super().__init__(**kw)
         self.rank = rank
         self.suit = suit
@@ -15,7 +15,7 @@ class Tile(Button):
         self.front_image = PhotoImage(file=f"gui/Images/{self.rank}_of_{self.suit}.png")  # χρήση f-string για προσδιορισμό του path της εικόνας του tile.
         self.width = 142
         self.height = 200
-        self.is_flipped = False  # γίνεται true αν ο χρήστης μπορεί να δει τη μπροστινή όψη, αλλιώς είναι false
+        self.is_flipped = is_flipped  # γίνεται true αν ο χρήστης μπορεί να δει τη μπροστινή όψη, αλλιώς είναι false
 
     def __repr__(self):
         return f"({self.rank}, {self.suit})"
@@ -45,5 +45,3 @@ class Tile(Button):
         elif self.rank in ("jack", "queen", "king"):
             return 10
         return self.rank
-
-
