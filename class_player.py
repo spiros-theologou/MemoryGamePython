@@ -1,4 +1,3 @@
-
 class Player:
     """Κλάση 'Παίκτης', καθορίζει τα γνωρίσματα ενός παίχτη δεδομένου του αριθμού του.(player 1, player 2 ...)"""
     def __init__(self, player_number):

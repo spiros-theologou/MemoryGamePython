@@ -1,5 +1,6 @@
-from class_ContinueGame import *
-
+from class_ContinueGame import ContinueGame
+from Memory_game import *
+from tkinter import *
 
 class Menu:
     """Μενού, περιέχει buttons και το frame που τοποθετούνται στο master"""
@@ -88,10 +89,12 @@ class Menu:
         b3.place(relx=.6, rely=.38, anchor='center')
         b4.place(relx=.7, rely=.38, anchor='center')
 
+    @staticmethod
     def clear_screen(*widgets):
         """Αφαιρεί τα widgets από το παράθυρο"""
         for widget in widgets:
             widget.destroy()
+
 
     def set_number_of_players(self, players):
         self.players = players

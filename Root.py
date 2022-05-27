@@ -1,7 +1,6 @@
 from tkinter import *
 from Menu import Menu
 
-
 master = Tk()
 master.geometry("1920x1024")
 # master.resizable(width=False, height=False)  # locks resizability of window
