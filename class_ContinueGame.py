@@ -12,12 +12,9 @@ class ContinueGame(NewGame):
         self.master = master
         self.difficulty = "normal"
 
-        try:
-            with open(f, "rb") as infile:
-                self.current_state = pickle.load(infile)
-        except FileNotFoundError:
-            print("Unable to load file")
-            exit(0)
+        # ανοίγουμε το αρχείο, έχει γίνει έλεγχος στο Menu για την ύπαρξή του
+        with open(f, "rb") as infile:
+            self.current_state = pickle.load(infile)
 
         # εξαγωγή των απαιτούμενων στοιχείων για το reconstruction του παιχνιδιού
         self.extract_data()

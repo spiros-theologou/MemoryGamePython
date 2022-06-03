@@ -107,9 +107,25 @@ class Menu:
     def start_game(self):
         """Καταστρέφει το frame του μενού ώστε να μπορεί να φορτωθεί το board,
          Καλεί την έναρξη παιχνιδιού"""
+
+        # NEW GAME
         if self.mode == "New Game":
             NewGame(self.master, self.difficulty, self.players)
+
+        # LOAD GAME
         else:
-            self.mode = "Continue Game"
-            self.clear_screen(self.b_new_game, self.b_continue, self.welcome_message)
-            ContinueGame("saved_game_data.pickle", self.master)
+            try:  # έλεγχος για το αν υπάρχει το αρχείο save
+                with open("saved_game_data.pickle", "rb") as f:
+                    self.mode = "Continue Game"
+                    self.clear_screen(self.b_new_game, self.b_continue, self.welcome_message)
+                    ContinueGame("saved_game_data.pickle", self.master)
+            except FileNotFoundError:  # αν όχι δημιουργούμε ένα popup window με μήνυμα αδυναμίας εύρεσης αποθηκευμένου παιχνιδιού
+                top = Toplevel(self.master)
+                top.geometry("250x200")
+                top.configure(background="green")
+                top.title("File Not Found")
+
+                # δημιουργία label για το popup window
+                Label(top, text="Δεν βρέθηκε \nαποθηκευμένο\n παιχνίδι",bg="green", font="Verdana 16 bold").pack()
+                Button(top, text="OK", font="Verdana 16 bold", bg="grey", command= top.destroy).pack()
+                top.mainloop()
