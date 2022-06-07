@@ -10,7 +10,6 @@ class ContinueGame(NewGame):
     def __init__(self, f, master):
 
         self.master = master
-        self.difficulty = "normal"
 
         # ανοίγουμε το αρχείο, έχει γίνει έλεγχος στο Menu για την ύπαρξή του
         with open(f, "rb") as infile:

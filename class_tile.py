@@ -23,11 +23,6 @@ class Tile(Button):
     def __str__(self):
         return f"{self.rank} of {self.suit}"
 
-    def set_front_image(self, image_path):
-        """ Προσδιορίζει την μπροστινή εικόνα του tile """
-        front_image = PhotoImage(image_path)
-        self.front_image = front_image
-
     def is_figure(self):
         """ Επιστρέφει true αν είναι φιγούρα, αλλιώς False"""
         if self.rank in ("jack", "queen", "king"):

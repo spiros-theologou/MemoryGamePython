@@ -189,7 +189,7 @@ class NewGame:
             tile.configure(command=lambda t=tile: self.button_click(t))
 
     def create_board(self):
-        """Δημιουργεί  το board, ανάλογα με τη δυσκολία"""
+        """Δημιουργεί το board, ανάλογα με τη δυσκολία"""
 
         # Εύκολο
         if self.difficulty == "easy":
