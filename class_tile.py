@@ -15,7 +15,7 @@ class Tile(Button):
         self.front_image = PhotoImage(file=f"gui/Images/{self.rank}_of_{self.suit}.png")  # χρήση f-string για προσδιορισμό του path της εικόνας του tile.
         self.width = 142
         self.height = 200
-        self.is_flipped = is_flipped  # γίνεται true αν ο χρήστης μπορεί να δει τη μπροστινή όψη, αλλιώς είναι false
+        self.is_flipped = is_flipped  # γίνεται true αν ο χρήστης μπορεί να δει την μπροστινή όψη, αλλιώς είναι false
 
     def __repr__(self):
         return f"({self.rank}, {self.suit})"

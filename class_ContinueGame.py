@@ -70,7 +70,7 @@ class ContinueGame(NewGame):
         for tile_info in self.tiles_info:
             tile = Tile(rank=tile_info[0], suit=tile_info[1], is_flipped=tile_info[2], master=self.board_frame, bg="green", bd=0)
             if tile.is_flipped:
-                # αν το tile είναι face up, ορίζουμε ως image το front image και δεν προσθέτουμε λειτουργηκότητα
+                # αν το tile είναι face up, ορίζουμε ως image το front image και δεν προσθέτουμε λειτουργικότητα
                 tile.image = tile.front_image
                 tile.configure(image=tile.image)
             else:

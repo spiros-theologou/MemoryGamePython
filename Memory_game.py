@@ -277,7 +277,7 @@ class NewGame:
             if {self.clicked_tiles[0].rank, self.clicked_tiles[1].rank} == {"king", "queen"} and len(self.clicked_tiles) <= 2:
                 self.message.configure(text="King and Queen, click on a 3rd tile!")
                 self.message.update()
-                self.click_count -= 1  # μειώνουμε το click count, ωστε να μην αλλάξει ο γύρος
+                self.click_count -= 1  # μειώνουμε το click count, ώστε να μην αλλάξει ο γύρος
         except IndexError:
             pass
 

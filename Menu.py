@@ -11,7 +11,7 @@ class Menu:
 
         # Label με μήνυμα τον τίτλο του παιχνιδιού
         self.welcome_message = Label(self.master, text="Παιχνίδι Mνήμης με Tράπουλα!",
-                                     bg="green", fg="red",
+                                     bg="green", fg="black",
                                      font="Verdana 36 bold italic", bd=1)
         self.welcome_message.place(relx=.5, rely=.05, anchor="n")
         # Δημιουργία Buttons
@@ -56,8 +56,7 @@ class Menu:
                                          ]
                         )
 
-        # και button για επιστροφη στο αρχικό μενού
-        # b_back = Button(self.master, text="Πίσω", font="Verdana 18 bold", bg="grey", height=1, width=6, command=lambda: self.__init__(self.master))
+
 
         # Τοποθέτηση buttons
         b_easy.place(relx=.5, rely=.3, anchor='center')
@@ -88,6 +87,8 @@ class Menu:
         b2.place(relx=.5, rely=.38, anchor='center')
         b3.place(relx=.6, rely=.38, anchor='center')
         b4.place(relx=.7, rely=.38, anchor='center')
+
+
 
     @staticmethod
     def clear_screen(*widgets):
@@ -121,11 +122,12 @@ class Menu:
                     ContinueGame("saved_game_data.pickle", self.master)
             except FileNotFoundError:  # αν όχι δημιουργούμε ένα popup window με μήνυμα αδυναμίας εύρεσης αποθηκευμένου παιχνιδιού
                 top = Toplevel(self.master)
-                top.geometry("250x200")
-                top.configure(background="green")
+                top.geometry("420x160")
+                top.configure(background="grey")
                 top.title("File Not Found")
+                top.resizable(False, False)
 
                 # δημιουργία label για το popup window
-                Label(top, text="Δεν βρέθηκε \nαποθηκευμένο\n παιχνίδι",bg="green", font="Verdana 16 bold").pack()
+                Label(top, text="\n\nΔεν βρέθηκε αποθηκευμένο παιχνίδι", bg="grey", font="Verdana 14 bold").pack()
                 Button(top, text="OK", font="Verdana 16 bold", bg="grey", command= top.destroy).pack()
                 top.mainloop()
