@@ -106,7 +106,7 @@ class NewGame:
             self.change_player()  # αλλαγή τρέχοντος παίκτη
             self.clicked_tiles.clear()  # καθαρισμός της λίστας των κλικαρισμένων tiles
             self.click_count = 0
-            self.message.configure(text=f"{self.current_player} plays..", fg="black")
+            self.message.configure(text=f"{self.current_player} ", fg="black")
             self.save_game()  # αποθηκεύει την κατάσταση του παιχνιδιού
             self.check_game_end()  # έλεγχος για τη λήξη του παιχνιδιού
 
@@ -250,7 +250,7 @@ class NewGame:
 
     def create_message_board(self):
         """ Τοποθετεί μηνύματα στο πάνω μέρος της οθόνης """
-        self.message = Label(self.master, text=f"{self.current_player} plays..", font="Courier 36 bold italic", bg="green")
+        self.message = Label(self.master, text=f"{self.current_player}", font="Courier 36 bold italic", bg="green")
         self.message.pack(pady=50)
 
     def update_scoreboard(self):
@@ -275,7 +275,7 @@ class NewGame:
         """Ελέγχει αν τα 2 πρώτα φύλλα που ανοίχτηκαν είναι king and queen και εκτελεί τις ανάλογες διαδικασίες"""
         try:
             if {self.clicked_tiles[0].rank, self.clicked_tiles[1].rank} == {"king", "queen"} and len(self.clicked_tiles) <= 2:
-                self.message.configure(text="King and Queen, click on a 3rd tile!")
+                self.message.configure(text="Ρήγας και Ντάμα, επίλεξε τρίτη κάρτα!")
                 self.message.update()
                 self.click_count -= 1  # μειώνουμε το click count, ώστε να μην αλλάξει ο γύρος
         except IndexError:
@@ -307,7 +307,7 @@ class NewGame:
             self.message.update()
             sleep(0.7)
             if len(winners) == 1:
-                self.message.configure(text=f"The winner is: {winners[0]} with {winners[0].score} points!\n\n\nThanks for playing!")
+                self.message.configure(text=f"Νικητής είναι ο: {winners[0]} με {winners[0].score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
                 self.board_frame.destroy()
                 self.message.update()
             else:
@@ -316,5 +316,5 @@ class NewGame:
                     winners_names += f"{winner.name}, "
 
                 self.board_frame.destroy()
-                self.message.configure(text=f"The game is tied between {winners_names}\nwith a score of {max_score} points!\n\n\nThanks for playing!")
+                self.message.configure(text=f"Το παιχνίδι είναι ισοπαλία μεταξύ των {winners_names}\nμε τελικό σκορ {max_score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
                 self.message.update()
