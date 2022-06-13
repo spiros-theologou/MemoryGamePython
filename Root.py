@@ -9,10 +9,11 @@ master.geometry("1920x1024")
 master.configure(background="green")
 master.minsize(1920, 1024)
 
-# Add title
+# Προσθήκη τίτλου
 master.title("Memory Card Game in Python")
 
-
+# Κλήση της κλάσης Menu
 main_menu = Menu(master)
 
+# Έναρξη του mainloop() του παιχνιδιού
 master.mainloop()

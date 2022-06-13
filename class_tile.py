@@ -5,7 +5,8 @@ suits = ["spades", "hearts", "clubs", "diamonds"]
 
 
 class Tile(Button):
-    """Κλάση tile που κληρονομεί ιδιότητες από το Button της Tk βιβλιοθήκης"""
+    """Κλάση tile που κληρονομεί ιδιότητες από το Button της Tk βιβλιοθήκης
+    και επίσης κατέχει έναν αριθμό γνωρισμάτων που θα έχει μια κάρτα(rank, suit, το path για τις εικόνες της κάρτας...)"""
 
     def __init__(self, rank, suit, is_flipped=False, **kw):
         super().__init__(**kw)
