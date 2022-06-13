@@ -262,7 +262,12 @@ class NewGame:
         """Προχωράει στον επόμενο παίκτη"""
         if self.clicked_tiles[0].rank == self.clicked_tiles[1].rank == "jack":  # αν έχουμε ανοίξει βαλέδες ξαναπαίζει ο ίδιος πάικτης
             return None
-        elif self.clicked_tiles[0].rank == self.clicked_tiles[1].rank == "king":  # αν έχουμε ανοίξει 2 ρηγάδες ο επόμενος παίκτης χάνει τη σειρά του
+        # Έλεγχος για τον αριθμό των ρηγάδων(μπορεί να είναι και λίστα με 3 στοιχεία)
+        kings = 0  # αρχικοποιεί τον αριθμό των ρηγάδων
+        for t in self.clicked_tiles:
+            if t.rank == "king":
+                kings += 1
+        if kings == 2:  # αν έχουμε ανοίξει 2 ρηγάδες ο επόμενος παίκτης χάνει τη σειρά του
             self.current_player_index += 2
             self.current_player_index = self.current_player_index % len(self.players)
             self.current_player = self.players[self.current_player_index]
@@ -307,7 +312,7 @@ class NewGame:
             self.message.update()
             sleep(0.7)
             if len(winners) == 1:
-                self.message.configure(text=f"Νικητής είναι ο: {winners[0]} με {winners[0].score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
+                self.message.configure(text=f"\n\nΝικητής είναι ο: {winners[0]} με {winners[0].score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
                 self.board_frame.destroy()
                 self.message.update()
             else:
@@ -316,5 +321,5 @@ class NewGame:
                     winners_names += f"{winner.name}, "
 
                 self.board_frame.destroy()
-                self.message.configure(text=f"Το παιχνίδι είναι ισοπαλία μεταξύ των {winners_names}\nμε τελικό σκορ {max_score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
+                self.message.configure(text=f"\n\nΤο παιχνίδι είναι ισοπαλία \nμεταξύ των {winners_names}\nμε τελικό σκορ {max_score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
                 self.message.update()
