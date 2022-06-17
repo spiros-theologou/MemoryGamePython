@@ -106,7 +106,7 @@ class NewGame:
         if not tile.is_flipped:
             if self.computer:
                 self.computer.memorize_tile(tile)
-                print(self.computer.history)
+
 
             self.click_count += 1  # μετρητής των click για αυτόν το γύρο
             self.flip(tile)
