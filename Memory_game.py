@@ -1,8 +1,9 @@
 from class_tile import *
-from random import shuffle  # χρειάζεται για το ανακάτεμα των φύλλων
+from random import shuffle, choice  # χρειάζεται για το ανακάτεμα των φύλλων
 from class_player import Player  # η κλάση που ορίζει τον παίκτη με τα βασικά του γνωρίσματα
 from time import sleep  # για να μην ανανεώνεται κατευθείαν η σελίδα πριν προλάβει ο παίκτης να δει τα φύλλα που ανοίξανε
 from class_GameState import *  # για την δημιουργία του GameState object που θα χρησιμοποιηθεί για την αποθύκευση
+from class_Computer import Computer  # για τη δημιουργία του AI Παίκτη
 import pickle  # για την αποθήκευση
 
 
@@ -14,6 +15,9 @@ class NewGame:
         self.master = master
         self.difficulty = difficulty
         self.total_players = total_players
+
+        # Αρχικοποίηση του υπολογιστή σε None(αλλάζει αν ο παίκτης είναι ένας στη μέθοδο init_players)
+        self.computer = None
 
         # Δημιουργία του frame και καθορισμός του grid για το board
         self.board_frame = Frame(master, bg="green")
@@ -46,10 +50,10 @@ class NewGame:
         # Αρχικοποίηση του αριθμού των "γυρισμένων" tiles ανά γύρο(click_count - θα βοηθήσει στο να προσδιορίσουμε πότε τελειώνει ο γύρος για έναν παίκτη)
         # της λίστας με τα επιλεγμένα tiles ανά γύρο
         # και του index του παίκτη που παίζει
-        self.current_player_index = 0  # το index του τρεχοντος παίκτη
+        self.current_player_index = 0  # το index του τρέχοντος παίκτη
         self.current_player = self.players[0]  # ο τρέχων παίκτης
         self.click_count = 0  # μεταβλητή που αποθηκεύει των αριθμό των κλικαρισμένων tiles ανά γύρο
-        self.clicked_tiles = []  # λίστα στην οποία θα αποθηκεύονται προσωρινά τα ανοιγμένα tiles
+        self.clicked_tiles = []  # λίστα στην οποία θα αποθηκεύονται προσωρινά τα ανοιγμένα tiles του γύρου
 
         # Αρχικοποίηση του αριθμού των "ανοιχτών" και των "κλειστών" tiles
         self.open_tiles = 0
@@ -62,7 +66,12 @@ class NewGame:
         self.create_message_board()
 
         # Δημιουργία αντικειμένου GameState για την αποθήκευση του παιχνιδιού
-        self.current_state = GameState(self.current_player, self.current_player_index, self.tiles, self.players, self.open_tiles, self.total_tiles, self.difficulty)
+        self.current_state = GameState(self.current_player_index, self.tiles, self.players, self.open_tiles, self.total_tiles, self.difficulty)
+
+        # Εκκινούμε τον γύρο με τον υπολογιστή αν υπάρχει
+        if self.current_player.name == "Computer":  # αν ο τρέχων παίκτης έιναι ο υπολογιστής, καλούμε τη μέθοδο που υλοποιεί το γύρο του
+            self.computer_turn()
+
 
     def init_tiles(self):
         """Αρχικοποιεί μια λίστα από tiles, ανάλογα με τη δυσκολία που επιλέχθηκε"""
@@ -94,26 +103,36 @@ class NewGame:
 
     def button_click(self, tile):
         """Η συνάρτηση που καλείται με το κλικάρισμα ενός tile"""
+        if not tile.is_flipped:
+            if self.computer:
+                self.computer.memorize_tile(tile)
+                print(self.computer.history)
 
-        self.click_count += 1  # μετρητής των click για αυτόν το γύρο
-        self.flip(tile)
-        self.master.update()  # ανανέωση του master για εμφάνιση των ανοιχτών tiles.
-        self.clicked_tiles.append(tile)
-        self.check_king_queen()  # έλεγχος για το αν έχουμε ζέυγος king-queen
-        # συγκρίνουμε τα tiles αν είναι 2 κλικαρισμένα
-        if self.click_count == 2:
-            self.compare_tiles(self.clicked_tiles)
-            self.change_player()  # αλλαγή τρέχοντος παίκτη
-            self.clicked_tiles.clear()  # καθαρισμός της λίστας των κλικαρισμένων tiles
-            self.click_count = 0
-            self.message.configure(text=f"{self.current_player} ", fg="black")
-            self.save_game()  # αποθηκεύει την κατάσταση του παιχνιδιού
-            self.check_game_end()  # έλεγχος για τη λήξη του παιχνιδιού
+            self.click_count += 1  # μετρητής των click για αυτόν το γύρο
+            self.flip(tile)
+            self.master.update()  # ανανέωση του master για εμφάνιση των ανοιχτών tiles.
+            self.clicked_tiles.append(tile)
+            self.check_king_queen()  # έλεγχος για το αν έχουμε ζέυγος king-queen
+            # συγκρίνουμε τα tiles αν είναι 2 κλικαρισμένα
+            if self.click_count == 2:
+                self.compare_tiles(self.clicked_tiles)
+                self.change_player()  # αλλαγή τρέχοντος παίκτη
+                self.clicked_tiles.clear()  # καθαρισμός της λίστας των κλικαρισμένων tiles
+                self.click_count = 0
+                self.message.configure(text=f"{self.current_player} ", fg="black")
+                if self.current_player != self.computer:
+                    self.save_game()  # αποθηκεύει την κατάσταση του παιχνιδιού στο τέλος κάθε 2ου γύρου
+                end = self.check_game_end()  # έλεγχος για τη λήξη του παιχνιδιού
+                if not end:
+                    if isinstance(self.current_player, Computer):
+                        self.computer_turn()
+        else:
+            pass
 
     def compare_tiles(self, tile_list):
         """Συγκρίνει τα tiles της λίστας, ανανεώνει κατάλληλα το μήνυμα και το scoreboard"""
 
-        if len(tile_list) == 2:  # στην περίπτωση που δεν έχει ανοίξει ο συνδυασμός ρήγας-ντάμα
+        if len(tile_list) == 2:  # στην περίπτωση που δεν έχει ανοίξει ο συνδυασμός Ρήγας-ντάμα
             if tile_list[0].rank != tile_list[1].rank:  # αν δεν ταιριάζουν, τα γυρνάμε ανάποδα
                 self.message.configure(text="NO MATCH!", fg="red")
                 self.message.update()
@@ -122,13 +141,15 @@ class NewGame:
                     self.flip(t)
             else:
                 self.message.configure(text="MATCH!", fg="blue")
+                if self.computer:
+                    self.computer.remove_tiles(self.clicked_tiles)
                 self.message.update()
                 sleep(0.7)
                 self.current_player.add_score(tile_list[0].value())
                 self.update_scoreboard()
                 self.open_tiles += 2
 
-        else:  # στην περίπτωση που έχουμε ρήγα-ντάμα- 3ο φύλλο
+        else:  # στην περίπτωση που έχουμε Ρήγα-ντάμα- 3ο φύλλο
             kings_count = 0  # μετρητής για του kings
             queens_count = 0  # μετρητής για τις queens
 
@@ -141,6 +162,7 @@ class NewGame:
             # διαχωρισμός περιπτώσεων
             if kings_count == 2:
                 self.message.configure(text="MATCH!", fg="blue")
+                self.computer.remove_tiles(self.clicked_tiles)
                 self.message.update()
                 sleep(0.7)
                 self.current_player.add_score(10)
@@ -152,6 +174,10 @@ class NewGame:
 
             elif queens_count == 2:
                 self.message.configure(text="MATCH!", fg="blue")
+                try:
+                    self.computer.remove_tiles(self.clicked_tiles)
+                except AttributeError:
+                    pass
                 self.message.update()
                 sleep(0.7)
                 self.current_player.add_score(10)
@@ -184,7 +210,7 @@ class NewGame:
                 tile.configure(command=lambda t=tile: self.button_click(t))
 
     def add_tile_functionality(self):
-        """ Προσθήκη λειτουργικότητας στα tiles , αλλάζοντας την εικόνα που φαίνεται στο tile που κλικάρεται"""
+        """ Προσθήκη λειτουργικότητας στα tiles, αλλάζοντας την εικόνα που φαίνεται στο tile που κλικάρεται"""
         for tile in self.tiles:
             tile.configure(command=lambda t=tile: self.button_click(t))
 
@@ -233,9 +259,15 @@ class NewGame:
     def init_players(self):
         """Δημιουργία λίστας με τους παίκτες που λαμβάνουν μέρος στο παιχνίδι"""
 
-        if self.total_players != 1:  # στην περίπτωση που είναι ένας παίκτης ακολουθούμε άλλη διαδικασία(computer...)
+        # MULTIPLAYER
+        if self.total_players != 1:
             for player_number in range(1, self.total_players + 1):
                 self.players.append(Player(player_number))
+        # SINGLE PLAYER
+        else:
+            self.computer = Computer()
+            self.players.append(self.computer)
+            self.players.append(Player(1))
 
     def create_scoreboard(self):
         """ Δημιουργεί και τοποθετεί τα labels του σκορ του κάθε παίκτη,
@@ -254,7 +286,7 @@ class NewGame:
         self.message.pack(pady=50)
 
     def update_scoreboard(self):
-        """Ανενεώνει το scoreboard"""
+        """Ανaνεώνει το scoreboard"""
         for player, label in self.player_scores.items():
             label.configure(text=f"{player.name}: {player.score}")
 
@@ -283,16 +315,25 @@ class NewGame:
                 self.message.configure(text="Ρήγας και Ντάμα, επίλεξε τρίτη κάρτα!")
                 self.message.update()
                 self.click_count -= 1  # μειώνουμε το click count, ώστε να μην αλλάξει ο γύρος
+                if self.current_player == self.computer:
+                    print("Computer chooses a third card")
+                    self.choose_third_card()
         except IndexError:
             pass
 
     def save_game(self):
         """Καλείται στο τέλος κάθε γύρου. Ενημερώνει το GameState και το αποθηκεύει, κάνοντας overwrite το προηγούμενο"""
-        self.current_state.current_player = self.current_player
+
         self.current_state.tiles_info = [(tile.rank, tile.suit, tile.is_flipped) for tile in self.tiles]  # αποθηκεύει την κατάσταση του κάθε tile σε μια λίστα, ώστε να μπορούμε να το κάνουμε recreate
         self.current_state.open_tiles = self.open_tiles
-        self.current_state.players_list = self.players
         self.current_state.player_index = self.current_player_index
+        self.current_state.players_list = self.players[:]
+
+        # Αν υπάρχει ΑΙ παιρνάμε το score του και μια λίστα με τα index των tiles που βρίσκονται στο ιστορικό του
+        if self.computer:
+            self.current_state.players_list.pop(0)
+            self.current_state.computer_score = self.computer.score
+            self.current_state.computer_history_indexes = [self.tiles.index(tile) for tile in self.computer.history]
 
         with open("saved_game_data.pickle", "wb") as outfile:
             pickle.dump(self.current_state, outfile)
@@ -300,8 +341,9 @@ class NewGame:
     def check_game_end(self):
         """Ελέγχει αν το παιχνίδι έχει τελειώσει συγκρίνοντας τον αριθμό των ανοιγμένων tiles
         με τον αριθμό των συνολικών, στη συνέχεια ανακοινώνει τον νικητή βρίσκοντας το μέγιστο score"""
-
+        end = False
         if self.open_tiles == self.total_tiles:
+            end = True
             max_score = max([player.score for player in self.players])  # βρίσκουμε το μέγιστο σκορ
             winners = []  # λίστα με τους νικητές
             for player in self.players:
@@ -312,7 +354,7 @@ class NewGame:
             self.message.update()
             sleep(0.7)
             if len(winners) == 1:
-                self.message.configure(text=f"\n\nΝικητής είναι ο: {winners[0]} με {winners[0].score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
+                self.message.configure(text=f"\n\nΝικητής είναι ο: {winners[0]}, με {winners[0].score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
                 self.board_frame.destroy()
                 self.message.update()
             else:
@@ -323,3 +365,89 @@ class NewGame:
                 self.board_frame.destroy()
                 self.message.configure(text=f"\n\nΤο παιχνίδι είναι ισοπαλία \nμεταξύ των {winners_names}\nμε τελικό σκορ {max_score} πόντους!\n\n\nΕυχαριστούμε που παίξατε!")
                 self.message.update()
+        return end
+
+    def computer_turn(self):
+        """Οι δράσεις που κάνει ο υπολογιστής στον γύρο του"""
+        self.master.config(cursor="none")
+        self.master.update()
+        sleep(0.4)
+        first_tile = None
+
+        def select_random_closed_tile(a_tile):
+            """ Επιστρέφει ένα τυχαίο κλειστό tile"""
+            found = False
+            while not found:
+                t = choice(self.tiles)
+                if not t.is_flipped and t.suit != a_tile.suit:
+                    return t
+
+        # Έλεγχος για την ύπαρξη κοινών tiles στο ιστορικό καρτών με χρήση διπλής επανάληψης
+        # για την αποφυγή διπλών συγκρίσεων πχ. το history[0] με το history [2] και μετά το history[2] με το history[0]
+        # αν βρεθεί ισότητα ως προς το rank γυρίζουμε τις 2 κάρτες που ταιριάζουν και τις αφαιρούμε από το ιστορικό καρτών
+        # προσάπτονται στον υπολογιστή οι ανάλογοι πόντοι και τερματίζεται ο γύρος του.
+        if self.computer.history:
+            try:
+                for i in range(len(self.computer.history)):
+                    for j in range(i + 1, len(self.computer.history)):
+                        if self.computer.history[i].rank == self.computer.history[j].rank:
+                            self.button_click(self.computer.history[i])
+                            sleep(0.7)
+                            self.button_click(self.computer.history[j])
+                            self.computer.remove_tiles(self.clicked_tiles)
+                            self.master.config(cursor="")
+                            return None
+            except IndexError:
+                pass
+
+            # προχωράμε στο ενδεχόμενο όπου δεν βρέθηκαν κάρτες που ταιριάζουν
+
+            # βρίσκουμε την πρώτη διαθέσιμη κλειστή κάρτα
+            for tile in self.tiles:
+                if not tile.is_flipped:
+                    first_tile = tile
+                    break
+
+            self.button_click(first_tile)
+            sleep(0.7)
+            # ελέγχουμε αν υπάρχει στο ιστορικό καρτών
+            for card in self.computer.history:
+                if (first_tile.rank == card.rank) and (first_tile.suit != card.suit):
+                    self.button_click(card)
+                    sleep(0.7)
+                    self.computer.remove_tiles(self.clicked_tiles)
+                    break
+            else:
+                second_tile = select_random_closed_tile(first_tile)
+                self.button_click(second_tile)
+        # αν ΔΕΝ υπάρχει ιστορικό καρτών
+        else:
+            # βρίσκουμε την πρώτη διαθέσιμη κάρτα
+            for tile in self.tiles:
+                if not tile.is_flipped:
+                    first_tile = tile
+                    self.button_click(first_tile)
+                    sleep(0.7)
+                    break
+            # επιλέγουμε μια τυχαία κλειστή κάρτα
+            second_tile = select_random_closed_tile(first_tile)
+            self.button_click(second_tile)
+            sleep(0.7)
+
+        self.master.config(cursor="")
+        self.master.update()
+
+    def choose_third_card(self):
+        """Ο υπολογιστής επιλέγει 3η κάρτα στην περίπτωση του K-Q combo"""
+        sleep(0.7)
+        for tile in self.computer.history:
+            if (tile.rank == "king" or tile.rank == "queen") and (not tile.is_flipped) and (tile not in self.clicked_tiles):
+                self.button_click(tile)
+                return None
+
+        found = False
+        while not found:
+            t = choice(self.tiles)
+            if not t.is_flipped and t not in self.clicked_tiles:
+                found = True
+            self.button_click(t)

@@ -12,7 +12,7 @@ master.minsize(1920, 1024)
 # Προσθήκη τίτλου
 master.title("Memory Card Game in Python")
 
-# Κλήση της κλάσης Menu
+# Δημιουργία αντικειμένου της κλάσης Menu
 main_menu = Menu(master)
 
 # Έναρξη του mainloop() του παιχνιδιού

@@ -3,7 +3,7 @@ from Memory_game import *
 from tkinter import *
 
 class Menu:
-    """Μενού, περιέχει buttons και το frame που τοποθετούνται στο master"""
+    """Μενού, περιέχει buttons και το frame που τοποθετούνται στο master window"""
 
     def __init__(self, master):
         self.master = master
@@ -65,7 +65,7 @@ class Menu:
 
     def num_of_players(self):
         """Επιλογή αριθμού παχτών"""
-        choice_prompt = Label(self.frame, text="Επίλεξε Αριθμό Παιχτών:", font="Verdana 26 bold", bg="green")
+        choice_prompt = Label(self.frame, text="Επίλεξε Αριθμό Παικτών:", font="Verdana 26 bold", bg="green")
         choice_prompt.place(relx=.3, rely=.3, anchor='center')
         # Αρχικοποίηση αριθμού παιχτών
         # Buttons
@@ -113,7 +113,7 @@ class Menu:
         if self.mode == "New Game":
             NewGame(self.master, self.difficulty, self.players)
 
-        # LOAD GAME
+        # CONTINUE GAME
         else:
             try:  # έλεγχος για το αν υπάρχει το αρχείο save
                 with open("saved_game_data.pickle", "rb") as f:

@@ -1,4 +1,5 @@
 from Memory_game import *
+from class_Computer import Computer  # για τη δημιουργία του AI Παίκτη
 
 
 class ContinueGame(NewGame):
@@ -11,12 +12,15 @@ class ContinueGame(NewGame):
 
         self.master = master
 
+        self.computer = None
+
         # ανοίγουμε το αρχείο, έχει γίνει έλεγχος στο Menu για την ύπαρξή του
         with open(f, "rb") as infile:
             self.current_state = pickle.load(infile)
 
         # εξαγωγή των απαιτούμενων στοιχείων για το reconstruction του παιχνιδιού
         self.extract_data()
+        self.current_player = self.players[self.current_player_index]
 
         # Δημιουργία του frame που θα τοποθετηθεί η λεζάντα των μηνυμάτων παιχνιδιού(ποιος παίζει, αν έχουμε match η όχι κλπ...)
         self.message_frame = Frame(master, bg="green")
@@ -55,13 +59,17 @@ class ContinueGame(NewGame):
 
     def extract_data(self):
         """Εξάγει τα δεδομένα από το αρχείο που διαβάσαμε"""
-        self.current_player = self.current_state.current_player
         self.current_player_index = self.current_state.player_index
         self.tiles_info = self.current_state.tiles_info
-        self.players = self.current_state.players_list
         self.open_tiles = self.current_state.open_tiles
         self.total_tiles = self.current_state.total_tiles
         self.difficulty = self.current_state.difficulty
+        self.players = self.current_state.players_list
+        if self.current_state.computer_score:
+            self.players.insert(0, Computer())
+            self.players[0].score = self.current_state.computer_score
+            self.computer = self.players[0]
+
 
     def tile_reconstruction(self):
         """Δημιουργεί τη λίστα και τα tiles που περιέχει"""
@@ -77,6 +85,13 @@ class ContinueGame(NewGame):
                 tile.configure(image=tile.image)
                 tile.configure(command=lambda t=tile: self.button_click(t))
             self.tiles.append(tile)
+
+        # δημιουργεί τη λίστα με το ιστορικό αν υπάρχει ΑΙ
+        if isinstance(self.players[0], Computer):
+            for index in self.current_state.computer_history_indexes:
+                print(self.tiles[index])
+                self.players[0].history.append(self.tiles[index])
+
 
     def board_reconstruction(self):
         """Τοποθετεί τα tiles στο board"""
